@@ -6,6 +6,7 @@ const cors = require('cors');
 
 app.use(bodyParser.json());
 app.use(cors());
+app.use(experss.static('build'));
 
 morgan.token('body', function(req, res) {
   return JSON.stringify(req.body);
