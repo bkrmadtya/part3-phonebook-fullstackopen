@@ -3,6 +3,11 @@ const app = express();
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
 const cors = require('cors');
+const mongoose = require('mongoose');
+
+const url = `mongodb+srv://fullstack:fullstack@cluster0-2x9ya.mongodb.net/phonebook?retryWrites=true&w=majority`;
+
+mongoose.connect(url, { useNewUrlParser: true });
 
 app.use(express.static('build'));
 app.use(cors());
