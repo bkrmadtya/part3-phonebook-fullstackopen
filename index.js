@@ -1,13 +1,16 @@
-require('dotenv').config();
+if (process.env.NODE_ENV != 'production') {
+  require('dotenv').config();
+}
+
 const express = require('express');
 const app = express();
 const bodyParser = require('body-parser');
 const morgan = require('morgan');
-const cors = require('cors');
+// const cors = require('cors');
 const Person = require('./models/person');
 
 app.use(express.static('build'));
-app.use(cors());
+// app.use(cors());
 app.use(bodyParser.json());
 
 morgan.token('body', function(req, res) {
@@ -44,33 +47,23 @@ app.get('/api/persons/:id', (request, response) => {
   });
 });
 
-app.post('/api/persons', (request, response) => {
+app.post('/api/persons', (request, response, next) => {
   const body = request.body;
-  console.log(body);
-  // const alreadyExist = Person.find({ name: body.name });
-
-  if (!body.name || !body.number) {
-    return response.status(400).json({
-      error: 'content missing'
-    });
-  }
-  // else if (alreadyExist) {
-  //   return response.status(400).json({
-  //     error: 'name must be unique'
-  //   });
-  // }
 
   const person = new Person({
     name: body.name,
     number: body.number
   });
 
-  person.save().then(savedPerson => {
-    response.json(savedPerson.toJSON());
-  });
+  person
+    .save()
+    .then(savedPerson => {
+      response.json(savedPerson.toJSON());
+    })
+    .catch(error => next(error));
 });
 
-app.put('/api/persons/:id', (request, response) => {
+app.put('/api/persons/:id', (request, response, next) => {
   const id = request.params.id;
   const body = request.body;
 
@@ -83,7 +76,7 @@ app.put('/api/persons/:id', (request, response) => {
     .then(updatedPerson => {
       response.json(updatedPerson.toJSON());
     })
-    .catch(error => next(erro));
+    .catch(error => next(error));
 });
 
 app.delete('/api/persons/:id', (request, response) => {
@@ -109,10 +102,14 @@ const errorHandler = (error, request, response, next) => {
 
   if (error.name === 'CastError' && error.kind === 'ObjectId') {
     return response.status(400).send({ error: 'malformatted id' });
+  } else if (error.name === 'ValidationError') {
+    return response.status(400).json({ error: error.message });
   }
 
   next(error);
 };
+
+app.use(errorHandler);
 
 const port = process.env.PORT;
 app.listen(port, () => {
